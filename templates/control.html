@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    {% if hobby == "游戏"%}
+        <h1>游戏</h1>
+    {% else %}
+        <h1>听歌</h1>
+    {% endif %}
+    {% for item in person%}
+        {{person[item]}}
+    {% endfor %}
+</body>
+</html>
