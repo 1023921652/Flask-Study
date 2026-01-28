@@ -2,9 +2,8 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text
 import config
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy import MetaData, Integer, String,ForeignKey
-from typing import List
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy import MetaData, Integer, String
 from flask_migrate import Migrate
 # 上述代码中，字典naming_convention是一个固定的写法，主要是用来给表约束做一些命名约定的，使得后期alembic在生成迁移脚本时，生成的约束名不是随机的，而是有命名规范的。
 # 在User模型中，我们使用Mapped[类型名]语法来让开发者和IDE识别该属性的类型，为开发提供便捷性；另外，凡是使用了mapped_column创建的属性都将被映射到表中成为字段，并且该字段有什么配置，都可以在mapped_column中添加相关参数，比如字段类型（db.Integer）、是否可以为空（nullable）、是否为主键（primary_key=True）、是否自增（autoincrement=True）等。
@@ -41,45 +40,70 @@ class User(db.Model):
     __tablename__ = 'user'
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     username: Mapped[str] = mapped_column(String(50), nullable=True)
-    department_id: Mapped[int] = mapped_column(Integer, ForeignKey('department.id'), nullable=True)
-    # 会自动查找外键department_id对应的Deparment表,将获取到的Deparment对象赋值给deparment
-    # 就可以通过user.department.name就可以访问所属的部门
-    # 注意此处是一对多的关系
-    # back_populates表示反向引用,它值和Department的users字段对应
-    # 我们针对department_id创建了一个属性department（这个属性是ORM层面的属性，并不会在数据库中生成字段）。它引用的是Department类对象
-    department: Mapped['Department'] = relationship(back_populates='users')
-
-class Department(db.Model):
-    __tablename__ = 'department'
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    name: Mapped[str] = mapped_column(String(50), nullable=True)
-    # 注意此处是多对一的关系,注意这是一个list
-    # users中存储的是符合name字段的所有user对象,这是ORM框架内部的实现,新增这种字段不用进行数据表迁移和更新
-    users: Mapped[List["User"]] = relationship(back_populates='department')
+    password: Mapped[str] = mapped_column(String(200), nullable=True)
+    email: Mapped[str] = mapped_column(String(200), nullable=True)
+    age: Mapped[int] = mapped_column(Integer, nullable=True)
 
 
-@app.route('/one2many')
-def one2many():
-    # 1 通过user添加deparment
-    # department = Department(name='技术部')
-    # user= User(username = "张三", department = department)
+@app.route('/')
+def hello_world():  # put application's code here
+    return 'Hello World!'
+# 添加数据
+@app.route('/create')
+def create():
+    # 添加一条记录
+    # user = User(username="lili", password="asledfgo")
     # db.session.add(user)
-    # db.session.commit()
-    # 2 通过deparment添加user
-    # department = db.session.scalar(db.select(Department).where(Department.id == 1))
-    # user = User(username="李四")
-    # department.users.append(user)
-    # # 此处未使用,因为department已经通过session查出来了,已经在session中
-    # db.session.commit()
-    # 3 通过user访问deparment
-    # user = db.session.scalar(db.select(User).where(User.username == '李四'))
-    # print(user.department.name)
-    # 4 通过deparment获取所有用户
-    department = db.session.scalar(db.select(Department).where(Department.id == 1))
-    users = department.users
-    for user in users:
-        print(user.username)
-    return "数据添加成功"
+    # 添加多条数据
+    user1 = User(username="小王", password="asledfgo")
+    user2 = User(username="小张", password="asledfgo")
+    db.session.add_all([user1, user2])
+    db.session.commit()
+    return '数据添加成功'
 
+# 读取数据
+@app.route('/read')
+def read():
+    # 查找多条数据,可以使用db.session.scalars
+    # 方式一
+    # users = db.session.execute(db.select(User)).scalars().all()
+    # 方式二
+    # users = db.session.scalars(db.select(User)).all()
+
+    # 查找一条数据,可以使用db.session.scalar
+    # 数据筛选 filter_by只能进行相等筛查
+    # user = db.session.scalar(db.select(User).filter_by(id=1))
+    # where可以进行不等筛查
+    # user = db.session.execute(db.select(User).where(User.id == 1)).scalar()
+    # user = db.session.scalar(db.select(User).where(User.id == 1))
+
+    # 排序,默认是从小到大排序,如果想从大到小排序,使用User.username.desc()
+    users = db.session.scalars(db.select(User).order_by(User.id.desc()))
+    print(users)
+    return '数据读取成功'
+
+@app.route('/update')
+def update():
+    # 两次sql操作
+    # user = db.session.scalar(db.select(User).where(User.id == 1))
+    # user.username = "历史"
+    # db.session.commit()
+    # 一次sql操作
+    db.session.execute(db.update(User).where(User.id == 1).values(username="王五"))
+    db.session.commit()
+    # print(users)
+    return "更新成功"
+
+
+@app.route('/delete')
+def delete():
+    # 两次sql操作
+    # user = db.session.scalar(db.select(User).where(User.id == 1))
+    # db.session.delete(user)
+    # db.session.commit()
+    # 一次sql操作
+    db.session.execute(db.delete(User).where(User.id == 2))
+    db.session.commit()
+    return "删除成功"
 if __name__ == '__main__':
     app.run()
