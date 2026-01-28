@@ -79,6 +79,7 @@ def one2many():
     users = department.users
     for user in users:
         print(user.username)
+        print('hehe')
     return "数据添加成功"
 
 if __name__ == '__main__':
