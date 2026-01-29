@@ -45,7 +45,7 @@ class User(db.Model):
     # 会自动查找外键department_id对应的Deparment表,将获取到的Deparment对象赋值给deparment
     # 就可以通过user.department.name就可以访问所属的部门
     # 注意此处是一对多的关系
-    # back_populates表示反向引用,它值和Department的users字段对应
+    # back_populates表示反向引用,它的值和Department的users字段对应
     # 我们针对department_id创建了一个属性department（这个属性是ORM层面的属性，并不会在数据库中生成字段）。它引用的是Department类对象
     department: Mapped['Department'] = relationship(back_populates='users')
 
