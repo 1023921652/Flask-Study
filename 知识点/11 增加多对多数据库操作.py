@@ -37,7 +37,7 @@ department_permission_table = Table(
     # 字段名
     # 这两个字段合起来作为一个主键,称为复合主键
     # 这意味着：唯一性约束不再是针对单独的 department_id，而是针对 (department_id, permission_id) 这个组合。
-    # 合起来作为一个主键,示例 : 技术部能够访问主页在此表中   只会存在一条数据   不应该存在两条数据
+    # 合起来作为一个主键,示例 : 技术部能够访问主页  在此表中只会存在一条数据   不应该存在两条数据
     Column("department_id", Integer, ForeignKey("department.id"), primary_key=True),
     Column("permission_id", Integer, ForeignKey("permission.id"), primary_key=True)
 )
